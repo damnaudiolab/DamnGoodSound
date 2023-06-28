@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 
-set(PROJECT_NAME "DamnGoodSounder")
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake CACHE STRING "")
+endif()
+
+set(PROJECT_NAME "DamnGoodSound")
 
 set(FORMATS AUv3 VST3 Standalone)
 
-project(${PROJECT_NAME} VERSION 0.0.2 LANGUAGES CXX)
+project(${PROJECT_NAME} VERSION 0.0.1 LANGUAGES CXX)
 
 set(CMAKE_XCODE_GENERATE_SCHEME OFF)
 
