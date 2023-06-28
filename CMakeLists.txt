@@ -45,6 +45,8 @@ target_sources(${PROJECT_NAME} PRIVATE ${SourecFiles})
 
 juce_add_binary_data(BinaryData SOURCES Assets/logo.svg Assets/Font/Roboto_Regular.ttf)
 
+set(JUCE_TARGET_HAS_BINARY_DATA)
+
 set(JUCE_DEPENDENCIES
     juce::juce_audio_basics
     juce::juce_audio_devices
