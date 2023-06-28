@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="VkZzK2" name="DamnGoodSound" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="1" jucerFormatVersion="1" companyWebsite="damnaudiolab.netlify.app"
+              bundleIdentifier="org.damnaudiolab.damngoodsound" pluginManufacturer="DambAudioLab"
+              pluginManufacturerCode="Dlab" pluginCode="Dgds" pluginVST3Category="Distortion,Fx">
+  <MAINGROUP id="y8kFCe" name="DamnGoodSound">
+    <GROUP id="{414D9C11-A7A4-10B7-50DC-1FF0552DFF4E}" name="Assets">
+      <GROUP id="{F51BC599-ECAA-2E8F-A28B-8766C39FCFFB}" name="Font">
+        <FILE id="BgdkqQ" name="LICENSE.txt" compile="0" resource="0" file="Assets/Font/LICENSE.txt"/>
+        <FILE id="j4e3Kk" name="Roboto_Regular.ttf" compile="0" resource="1"
+              file="Assets/Font/Roboto_Regular.ttf"/>
+      </GROUP>
+      <FILE id="t5YCqq" name="logo.svg" compile="0" resource="1" file="Assets/logo.svg"/>
+    </GROUP>
+    <GROUP id="{D7D9F692-C6A6-B925-FF6A-3A60F559FB0A}" name="Source">
+      <GROUP id="{7CC21294-6EBC-6437-96A0-D1E2CA3A5739}" name="Processor"/>
+      <FILE id="DScaFc" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+      <FILE id="NQlAQE" name="CustomLookAndFeel.h" compile="0" resource="0"
+            file="Source/CustomLookAndFeel.h"/>
+      <FILE id="D3mwAy" name="Main.h" compile="0" resource="0" file="Source/Main.h"/>
+      <FILE id="BdCiL9" name="ProcessorHeader.h" compile="0" resource="0"
+            file="Source/ProcessorHeader.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="DamnGoodSounder"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="DamnGoodSounder"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+</JUCERPROJECT>
