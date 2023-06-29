@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
 
-if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake CACHE STRING "")
-endif()
-
 set(PROJECT_NAME "DamnGoodSound")
 
 set(FORMATS AUv3 VST3 Standalone)
@@ -38,8 +34,7 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 set(SourecFiles
     Source/Main.h
-    Source/Main.cpp
-    Source/CustomLookAndFeel.h)
+    Source/Main.cpp)
 
 target_sources(${PROJECT_NAME} PRIVATE ${SourecFiles})
 

@@ -21,6 +21,7 @@
 *******************************************************************************/
 
 #pragma once
+#include <JuceHeader.h>
 #include "CustomLookAndFeel.h"
 #include "ProcessorHeader.h"
 
@@ -39,8 +40,14 @@ public:
                 std::make_unique<AudioParameterFloat>(
                     "amount",
                     "Amount",
-                    NormalisableRange<float>(0.0f, 100.0f, 0.1f),
-                    50.0f
+                    NormalisableRange<float>(0.0f, 100.0f, 0.01f),
+                    0.0f
+                ),
+                std::make_unique<AudioParameterFloat>(
+                    "crossFreq",
+                    "CrossFreq",
+                    NormalisableRange<float>(200.0f, 8000.0f, 0.01f, 0.5f),
+                    200.0f
                 ),
             }
             )
@@ -53,10 +60,21 @@ public:
     }
 
     //==============================================================================
-    void prepareToPlay(double, int) override
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override
     {
         // Use this method as the place to do any pre-playback
         // initialisation that you need..
+        spec.maximumBlockSize = (uint32) samplesPerBlock;
+        spec.numChannels = 2;
+        spec.sampleRate = sampleRate;
+
+        filterBuffer.setSize(4, samplesPerBlock, false, false, true);
+
+        lowBand.prepare(spec);
+        highBand.prepare(spec);
+        lowShaper.prepare(spec);
+        highShaper.prepare(spec);
+        calcShaper.prepare(spec);
     }
 
     void releaseResources() override
@@ -71,6 +89,9 @@ public:
         auto totalNumInputChannels = getTotalNumInputChannels();
         auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+        const auto numSamples = buffer.getNumSamples();
+        const auto numChannels = buffer.getNumChannels();
+
         // In case we have more outputs than inputs, this code clears any output
         // channels that didn't contain input data, (because these aren't
         // guaranteed to be empty - they may contain garbage).
@@ -80,6 +101,27 @@ public:
         for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
             buffer.clear(i, 0, buffer.getNumSamples());
 
+        auto mainBlock = dsp::AudioBlock<float>(buffer);
+        auto multiBandBlock = dsp::AudioBlock<float>(filterBuffer).getSubBlock(0, (size_t) numSamples);
+
+        auto lowBlock = multiBandBlock.getSubsetChannelBlock(0, (size_t) numChannels);
+        auto highBlock = multiBandBlock.getSubsetChannelBlock(2, (size_t) numChannels);
+
+        auto preGain = powf(2, (*amount / 100.0f - 1.0f) * 4);
+        auto postGain = 1.0f / preGain;
+
+        //mainBlock.multiplyBy(preGain);
+
+        lowBlock.copyFrom(mainBlock);
+        highBlock.copyFrom(mainBlock);
+
+        //ainBlock.multiplyBy(postGain);
+
+        auto lowBandContext = dsp::ProcessContextReplacing<float> (lowBlock);
+
+        auto testContext = dsp::ProcessContextReplacing<float> (mainBlock);
+        lowShaper.process(testContext);
+
         // This is the place where you'd normally do the guts of your plugin's
         // audio processing...
         // Make sure to reset the state if your inner loop is processing
@@ -88,9 +130,15 @@ public:
         // interleaved by keeping the same state.
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            auto* channelData = buffer.getWritePointer(channel);
+            auto* inputBuffer = buffer.getReadPointer(channel);
+            auto* outputBuffer = buffer.getWritePointer(channel);
 
-            // ..do something to the data...
+            for (auto i = 0; i < numSamples; i++)
+            {
+                auto x = inputBuffer[i];
+                x *= preGain;
+                outputBuffer[i] = x * postGain;
+            }
         }
     }
 
@@ -161,13 +209,18 @@ private:
         {
 
             logo = Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize);
-            addAndMakeVisible(logo.get());
+            //addAndMakeVisible(logo.get());
             logo->setTransformToFit(headerArea.reduced(20).toFloat(), RectanglePlacement::centred);
 
             setSize(width, height);
+            
+            amountSliderAttachment.reset(new SliderAttachment(valueTreeState, "amount", amountSlider)); // 追加
+            addAndMakeVisible(amountSlider);
+
+            amountSlider.setBounds(bodyArea.reduced(20));
         }
 
-        ~PluginAudioProcessorEditor() override {};
+        ~PluginAudioProcessorEditor() override {}
 
         void paint(Graphics& g) override
         {
@@ -181,6 +234,9 @@ private:
         }
 
     private:
+
+        typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+
         CustomLookAndFeel customLookAndFeel;
 
         int width = 400;
@@ -192,19 +248,36 @@ private:
 
         std::unique_ptr<Drawable> logo;
 
+        Rectangle<int> bodyArea{0, 0, width, height};
+
         Rectangle<int> headerArea{0, 0, width, height};
+
+        Slider amountSlider;
+        std::unique_ptr<SliderAttachment> amountSliderAttachment;
+
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessorEditor)
     };
 
-    enum
+    AudioProcessorValueTreeState parameters;
+    
+    float shaperFunc(float x)
     {
-        waveshaperIndex
-    };
+        return x + (1 - fabs(x)) * x;
+    }
+
+    using Filter = dsp::LinkwitzRileyFilter<float>;
+    Filter lowBand, highBand;
+
+    using Shaper = SquaredShaper<float>;
+    Shaper lowShaper, highShaper, calcShaper;
+
+    dsp::ProcessSpec spec;
+
+    AudioBuffer<float> filterBuffer;
 
     std::atomic<float>* amount = nullptr;
-
-    AudioProcessorValueTreeState parameters;
+    std::atomic<float>* color = nullptr;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessor)
