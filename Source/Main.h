@@ -23,7 +23,6 @@
 #pragma once
 #include <JuceHeader.h>
 #include "CustomLookAndFeel.h"
-#include "ProcessorHeader.h"
 
 const static std::string VSTID = "DamnGoodSound";
 
@@ -40,15 +39,9 @@ public:
                 std::make_unique<AudioParameterFloat>(
                     "amount",
                     "Amount",
-                    NormalisableRange<float>(0.0f, 100.0f, 0.01f),
+                    NormalisableRange<float>(0.0f, 100.0f, 0.1f),
                     0.0f
-                ),
-                std::make_unique<AudioParameterFloat>(
-                    "crossFreq",
-                    "CrossFreq",
-                    NormalisableRange<float>(200.0f, 8000.0f, 0.01f, 0.5f),
-                    200.0f
-                ),
+                )
             }
             )
     {
@@ -70,11 +63,8 @@ public:
 
         filterBuffer.setSize(4, samplesPerBlock, false, false, true);
 
-        lowBand.prepare(spec);
-        highBand.prepare(spec);
-        lowShaper.prepare(spec);
-        highShaper.prepare(spec);
-        calcShaper.prepare(spec);
+        multiBandFilter.prepare(spec);
+        multiBandFilter.setCutoffFrequency(200.0f);
     }
 
     void releaseResources() override
@@ -101,43 +91,26 @@ public:
         for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
             buffer.clear(i, 0, buffer.getNumSamples());
 
-        auto mainBlock = dsp::AudioBlock<float>(buffer);
-        auto multiBandBlock = dsp::AudioBlock<float>(filterBuffer).getSubBlock(0, (size_t) numSamples);
-
-        auto lowBlock = multiBandBlock.getSubsetChannelBlock(0, (size_t) numChannels);
-        auto highBlock = multiBandBlock.getSubsetChannelBlock(2, (size_t) numChannels);
-
-        auto preGain = powf(2, (*amount / 100.0f - 1.0f) * 4);
-        auto postGain = 1.0f / preGain;
-
-        //mainBlock.multiplyBy(preGain);
-
-        lowBlock.copyFrom(mainBlock);
-        highBlock.copyFrom(mainBlock);
-
-        //ainBlock.multiplyBy(postGain);
-
-        auto lowBandContext = dsp::ProcessContextReplacing<float> (lowBlock);
-
-        auto testContext = dsp::ProcessContextReplacing<float> (mainBlock);
-        lowShaper.process(testContext);
-
-        // This is the place where you'd normally do the guts of your plugin's
-        // audio processing...
-        // Make sure to reset the state if your inner loop is processing
-        // the samples and the outer loop is handling the channels.
-        // Alternatively, you can process the samples with the channels
-        // interleaved by keeping the same state.
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+        for (int channel = 0; channel < numChannels; ++channel)
         {
             auto* inputBuffer = buffer.getReadPointer(channel);
             auto* outputBuffer = buffer.getWritePointer(channel);
 
             for (auto i = 0; i < numSamples; i++)
             {
+                auto curve = -3.0f * (1.0f - powf(1.0f - *amount / 100.0f, 3)) + 3.0f; // map(amount, 0, 100, 0, 3)
+
                 auto x = inputBuffer[i];
-                x *= preGain;
-                outputBuffer[i] = x * postGain;
+
+                float x_low, x_high = 0.0f;
+
+                multiBandFilter.processSample(channel, x, x_low, x_high);
+
+                // waveshaping
+                float y_low = shaperFunc(x_low, curve);
+                float y_high = shaperFunc(x_high, curve);
+
+                outputBuffer[i] = y_low + y_high; // post-gain
             }
         }
     }
@@ -212,12 +185,18 @@ private:
             //addAndMakeVisible(logo.get());
             logo->setTransformToFit(headerArea.reduced(20).toFloat(), RectanglePlacement::centred);
 
-            setSize(width, height);
+            setSize(bodyWidth, bodyHeight);
             
-            amountSliderAttachment.reset(new SliderAttachment(valueTreeState, "amount", amountSlider)); // 追加
-            addAndMakeVisible(amountSlider);
+            amountSliderAttachment.reset(new SliderAttachment(valueTreeState, "amount", amountSlider));
+            amountSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+            amountSlider.setTextBoxStyle(Slider::TextBoxBelow, false, amountSliderLabelWidth, amountSliderLabelHeight);
+            amountSlider.setTextValueSuffix(" %");
+            amountSlider.setNumDecimalPlacesToDisplay(1);
+            amountSlider.setColour(Slider::ColourIds::textBoxOutlineColourId, Colours::transparentBlack);
+            amountSlider.setBounds(amountSliderArea);
+            amountSlider.setLookAndFeel(&customLookAndFeel);
 
-            amountSlider.setBounds(bodyArea.reduced(20));
+            addAndMakeVisible(amountSlider);
         }
 
         ~PluginAudioProcessorEditor() override {}
@@ -239,8 +218,23 @@ private:
 
         CustomLookAndFeel customLookAndFeel;
 
-        int width = 400;
-        int height = 400;
+        int bodyWidth = 250;
+        int bodyHeight = 350;
+
+        #define wCent bodyWidth / 100;
+        #define hCent bodyHeight / 100;
+
+        int headerHeight = 20 * hCent;
+
+        int amountSliderPosX = 10 * wCent;
+        int amountSliderPosY = 30 * hCent;
+        int amountSliderWidth = 80 * wCent;
+        int amountSliderHeight = 65 * hCent;
+
+        int amountSliderLabelHeight = 10 * hCent;
+        int amountSliderLabelWidth = 30 * wCent;
+
+        int logoReduce = 5 * hCent;
 
         PluginAudioProcessor& audioProcessor;
 
@@ -248,29 +242,27 @@ private:
 
         std::unique_ptr<Drawable> logo;
 
-        Rectangle<int> bodyArea{0, 0, width, height};
+        Rectangle<int> bodyArea{0, 0, bodyWidth, bodyHeight};
 
-        Rectangle<int> headerArea{0, 0, width, height};
+        Rectangle<int> headerArea{0, 0, bodyWidth, headerHeight};
+
+        Rectangle<int> amountSliderArea{amountSliderPosX, amountSliderPosY, amountSliderWidth, amountSliderHeight};
 
         Slider amountSlider;
         std::unique_ptr<SliderAttachment> amountSliderAttachment;
-
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessorEditor)
     };
 
     AudioProcessorValueTreeState parameters;
     
-    float shaperFunc(float x)
+    template <typename SampleType>
+    const static SampleType shaperFunc(SampleType x, SampleType curve)
     {
-        return x + (1 - fabs(x)) * x;
+        return x + (1 - fabs(x)) * powf(fabs(x), curve) * x;
     }
 
-    using Filter = dsp::LinkwitzRileyFilter<float>;
-    Filter lowBand, highBand;
-
-    using Shaper = SquaredShaper<float>;
-    Shaper lowShaper, highShaper, calcShaper;
+    dsp::LinkwitzRileyFilter<float> multiBandFilter;
 
     dsp::ProcessSpec spec;
 
