@@ -37,15 +37,15 @@ public:
         ), parameters(*this, nullptr, Identifier(VSTID),
             {
                 std::make_unique<AudioParameterFloat>(
-                    "amount",
-                    "Amount",
-                    NormalisableRange<float>(0.0f, 100.0f, 0.1f),
+                    "color",
+                    "Color",
+                    NormalisableRange<float>(-50.0f, 50.0f, 0.1f),
                     0.0f
                 )
             }
             )
     {
-        amount = parameters.getRawParameterValue("amount");
+        color = parameters.getRawParameterValue("color");
     }
 
     ~PluginAudioProcessor() override
@@ -98,7 +98,9 @@ public:
 
             for (auto i = 0; i < numSamples; i++)
             {
-                auto curve = -3.0f * (1.0f - powf(1.0f - *amount / 100.0f, 3)) + 3.0f; // map(amount, 0, 100, 0, 3)
+                auto q = *color / 100.0f;
+                auto curve = 0.5f - q;
+                auto postGain = powf(2.0f, -1.0f * powf(2.0f, -1.5f + q));
 
                 auto x = inputBuffer[i];
 
@@ -110,7 +112,7 @@ public:
                 float y_low = shaperFunc(x_low, curve);
                 float y_high = shaperFunc(x_high, curve);
 
-                outputBuffer[i] = y_low + y_high; // post-gain
+                outputBuffer[i] = (y_low + y_high) * postGain; // post-gain
             }
         }
     }
@@ -180,23 +182,21 @@ private:
             AudioProcessorValueTreeState& vts)
             : AudioProcessorEditor(&p), audioProcessor(p), valueTreeState(vts)
         {
-
             logo = Drawable::createFromImageData(BinaryData::logo_svg, BinaryData::logo_svgSize);
-            //addAndMakeVisible(logo.get());
-            logo->setTransformToFit(headerArea.reduced(20).toFloat(), RectanglePlacement::centred);
+            logo->setTransformToFit(headerArea.reduced(logoReduce).toFloat(), RectanglePlacement::centred);
+            addAndMakeVisible(logo.get());
 
             setSize(bodyWidth, bodyHeight);
             
-            amountSliderAttachment.reset(new SliderAttachment(valueTreeState, "amount", amountSlider));
-            amountSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
-            amountSlider.setTextBoxStyle(Slider::TextBoxBelow, false, amountSliderLabelWidth, amountSliderLabelHeight);
-            amountSlider.setTextValueSuffix(" %");
-            amountSlider.setNumDecimalPlacesToDisplay(1);
-            amountSlider.setColour(Slider::ColourIds::textBoxOutlineColourId, Colours::transparentBlack);
-            amountSlider.setBounds(amountSliderArea);
-            amountSlider.setLookAndFeel(&customLookAndFeel);
+            colorSliderAttachment.reset(new SliderAttachment(valueTreeState, "color", colorSlider));
+            colorSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+            colorSlider.setTextBoxStyle(Slider::TextBoxBelow, false, colorSliderLabelWidth, colorSliderLabelHeight);
+            colorSlider.setNumDecimalPlacesToDisplay(1);
+            colorSlider.setColour(Slider::ColourIds::textBoxOutlineColourId, Colours::transparentBlack);
+            colorSlider.setBounds(colorSliderArea);
+            colorSlider.setLookAndFeel(&customLookAndFeel);
 
-            addAndMakeVisible(amountSlider);
+            addAndMakeVisible(colorSlider);
         }
 
         ~PluginAudioProcessorEditor() override {}
@@ -226,15 +226,15 @@ private:
 
         int headerHeight = 20 * hCent;
 
-        int amountSliderPosX = 10 * wCent;
-        int amountSliderPosY = 30 * hCent;
-        int amountSliderWidth = 80 * wCent;
-        int amountSliderHeight = 65 * hCent;
+        int colorSliderPosX = 10 * wCent;
+        int colorSliderPosY = 30 * hCent;
+        int colorSliderWidth = 80 * wCent;
+        int colorSliderHeight = 65 * hCent;
 
-        int amountSliderLabelHeight = 10 * hCent;
-        int amountSliderLabelWidth = 30 * wCent;
+        int colorSliderLabelHeight = 10 * hCent;
+        int colorSliderLabelWidth = 30 * wCent;
 
-        int logoReduce = 5 * hCent;
+        int logoReduce = 4 * hCent;
 
         PluginAudioProcessor& audioProcessor;
 
@@ -246,10 +246,10 @@ private:
 
         Rectangle<int> headerArea{0, 0, bodyWidth, headerHeight};
 
-        Rectangle<int> amountSliderArea{amountSliderPosX, amountSliderPosY, amountSliderWidth, amountSliderHeight};
+        Rectangle<int> colorSliderArea{colorSliderPosX, colorSliderPosY, colorSliderWidth, colorSliderHeight};
 
-        Slider amountSlider;
-        std::unique_ptr<SliderAttachment> amountSliderAttachment;
+        Slider colorSlider;
+        std::unique_ptr<SliderAttachment> colorSliderAttachment;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginAudioProcessorEditor)
     };
@@ -268,7 +268,6 @@ private:
 
     AudioBuffer<float> filterBuffer;
 
-    std::atomic<float>* amount = nullptr;
     std::atomic<float>* color = nullptr;
 
     //==============================================================================

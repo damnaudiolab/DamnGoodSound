@@ -10,7 +10,7 @@ public:
 
     static const Font getCustomFont()
     {
-        static auto typeface = Typeface::createSystemTypefaceFor(BinaryData::Roboto_Regular_ttf, BinaryData::Roboto_Regular_ttfSize);
+        static auto typeface = Typeface::createSystemTypefaceFor(BinaryData::BarlowRegular_ttf, BinaryData::BarlowRegular_ttfSize);
         return Font(typeface);
     }
 
@@ -21,7 +21,7 @@ public:
 
     void drawRotarySlider(Graphics& g, int x, int y, int width, int height,
         float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
-        Slider&) override
+        Slider& slider) override
     {
         auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
         auto bounds = Rectangle<int>(x, y, width, height).toFloat();
@@ -35,7 +35,7 @@ public:
         auto knobFillColour = colourPalette[white];
         auto thumbColour = colourPalette[black];
 
-        //bool sliderPolarity = (slider.getRange().getStart() / slider.getRange().getEnd()) == -1.0;
+        bool sliderPolarity = (slider.getRange().getStart() / slider.getRange().getEnd()) == -1.0;
 
         Path backgroundArc;
         backgroundArc.addCentredArc(
@@ -57,7 +57,7 @@ public:
             arcRadius,
             arcRadius,
             0.0f,
-            rotaryStartAngle,
+            sliderPolarity ? 2.0f * float_Pi : rotaryStartAngle,
             toAngle,
             true);
         g.setColour(valueFillColour);

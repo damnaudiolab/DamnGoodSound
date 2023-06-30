@@ -38,7 +38,7 @@ set(SourecFiles
 
 target_sources(${PROJECT_NAME} PRIVATE ${SourecFiles})
 
-juce_add_binary_data(BinaryData SOURCES Assets/logo.svg Assets/Font/Roboto_Regular.ttf)
+juce_add_binary_data(BinaryData SOURCES Assets/logo.svg Assets/Font/Barlow-Regular.ttf)
 
 set(JUCE_TARGET_HAS_BINARY_DATA)
 
