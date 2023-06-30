@@ -187,16 +187,16 @@ private:
             addAndMakeVisible(logo.get());
 
             setSize(bodyWidth, bodyHeight);
-            
+
+            addAndMakeVisible(colorSlider);
             colorSliderAttachment.reset(new SliderAttachment(valueTreeState, "color", colorSlider));
             colorSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
-            colorSlider.setTextBoxStyle(Slider::TextBoxBelow, false, colorSliderLabelWidth, colorSliderLabelHeight);
+            colorSlider.setTextBoxStyle(Slider::TextBoxBelow, false, colorSliderTextBoxWidth, colorSliderTextBoxHeight);
             colorSlider.setNumDecimalPlacesToDisplay(1);
             colorSlider.setColour(Slider::ColourIds::textBoxOutlineColourId, Colours::transparentBlack);
             colorSlider.setBounds(colorSliderArea);
             colorSlider.setLookAndFeel(&customLookAndFeel);
 
-            addAndMakeVisible(colorSlider);
         }
 
         ~PluginAudioProcessorEditor() override {}
@@ -213,7 +213,6 @@ private:
         }
 
     private:
-
         typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
 
         CustomLookAndFeel customLookAndFeel;
@@ -231,8 +230,8 @@ private:
         int colorSliderWidth = 80 * wCent;
         int colorSliderHeight = 65 * hCent;
 
-        int colorSliderLabelHeight = 10 * hCent;
-        int colorSliderLabelWidth = 30 * wCent;
+        int colorSliderTextBoxWidth = 20 * wCent;
+        int colorSliderTextBoxHeight = 10 * hCent;
 
         int logoReduce = 4 * hCent;
 
