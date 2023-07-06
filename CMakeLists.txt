@@ -26,7 +26,7 @@ juce_add_plugin("${PROJECT_NAME}"
     PRODUCT_NAME "${PROJECT_NAME}"
     VST3_CATEGORIES "Fx" "Distortion"
     AU_MAIN_TYPE "kAudioUnitType_Effect"
-    MICROPHONE_PERMISSION_ENABLED FALSE
+    MICROPHONE_PERMISSION_ENABLED TRUE
     MICROPHONE_PERMISSION_TEXT "This applicaion requires a permission to use an audio input device of your computer. By Default, Built-In microphone will be used."
     )
 
